@@ -21,54 +21,54 @@ import datetime
 import subprocess
 
 class Sansimera_fetch(sansimera_data.Sansimera_data):
-   def __init__(self):
-      self.online=False
+    def __init__(self):
+        self.online = False
 
 
-   def url(self):
-      imerominia=str(self.pay()+self.ponth())
-      self.url='http://www.sansimera.gr/almanac/'+imerominia
-      return self.url
+    def url(self):
+        imerominia = str(self.pay()+self.ponth())
+        self.url = 'http://www.sansimera.gr/almanac/'+imerominia
+        return self.url
 
-   def pay(self):
-      imera=str(datetime.date.today()).split('-')
-      imera=imera[1:]
-      self.pay=imera[1]
-      return self.pay
+    def pay(self):
+        imera = str(datetime.date.today()).split('-')
+        imera = imera[1:]
+        self.pay = imera[1]
+        return self.pay
 
 
-   def ponth(self):
-      imera=str(datetime.date.today()).split('-')
-      imera=imera[1:]
-      self.ponth=imera[0]
-      return self.ponth
+    def ponth(self):
+        imera = str(datetime.date.today()).split('-')
+        imera = imera[1:]
+        self.ponth = imera[0]
+        return self.ponth
 
-   def monthname(self):
-      dico={'01': 'Ιανουαρίου', '02': 'Φεβρουαρίου', '03': 'Μαρτίου', '04': 'Απριλίου', '05': 'Μαίου', '06': 'Ιουνίου',\
+    def monthname(self):
+        dico = {'01': 'Ιανουαρίου', '02': 'Φεβρουαρίου', '03': 'Μαρτίου', '04': 'Απριλίου', '05': 'Μαίου', '06': 'Ιουνίου',\
             '07': 'Ιουλίου', '08': 'Αυγούστου', '09': 'Σεπτεμβρίου', '10': 'Οκτωβρίου', '11': 'Νοεμβρίου', '12': 'Δεκεμβρίου'}
-      n=self.ponth()
-      self.im=str(' '*5+'...Σαν σήμερα '+self.pay()+' '+dico[n]+'\n')
-      return self.im
+        n = self.ponth()
+        self.im = str(' '*5+'...Σαν σήμερα '+self.pay()+' '+dico[n]+'\n')
+        return self.im
 
-   def html(self):
-      cmd=['kde4-config', '--localprefix']
-      output = subprocess.Popen( cmd, stdout=subprocess.PIPE ).communicate()[0]
-      path=output[:-1]+'share/apps/plasma/plasmoids/sansimera'
-      os.chdir(path)
-      link=self.url()
-      onoma='sansimera_html'
-      comm='wget --timeout=5 --user-agent="KDE Plasmoid" '+link+' -O '+onoma
-      self.online=True
-      os.system(comm)
-      arxeio=open(onoma, 'r')
-      ss=arxeio.read()
-      if ss=='':
-         self.online=False
-      arxeio.close()
+    def html(self):
+        cmd = ['kde4-config', '--localprefix']
+        output = subprocess.Popen( cmd, stdout=subprocess.PIPE ).communicate()[0]
+        path = output[:-1]+'share/apps/plasma/plasmoids/sansimera'
+        os.chdir(path)
+        link = self.url()
+        onoma='sansimera_html'
+        comm = 'wget --timeout=5 --user-agent="KDE Plasmoid" '+link+' -O '+onoma
+        self.online = True
+        os.system(comm)
+        arxeio = open(onoma, 'r')
+        ss=arxeio.read()
+        if ss == '':
+            self.online=False
+        arxeio.close()
 
 
 
 if __name__ == "__main__":
-   a1=Sansimera_fetch()
-   lista=a1.html()
+    a1=Sansimera_fetch()
+    lista=a1.html()
 
