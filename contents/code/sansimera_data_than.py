@@ -74,6 +74,8 @@ class Sansimera_data_than(sansimera_data.Sansimera_data):
         for i in htmll:
             result = regexp.search(i)
             if result:
+                # Remove whitespaces
+                i = ' '.join(i.split())
                 # Send the text with the year to the parser
                 self.parser_than(i)
 

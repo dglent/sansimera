@@ -29,28 +29,19 @@ class Sansimera(plasmascript.Applet):
     def init(self):
         self.download()
         self.deiktis = 0
-
         self.timer = QTimer(self)
         self.timer1 = QTimer(self)
-
         self.setMinimumSize(325.0,125.0)
         self.setAspectRatioMode(Plasma.IgnoreAspectRatio)
-
         self.label = Plasma.Label(self.applet)
-
         self.icon = Plasma.IconWidget(self.applet)
         self.icon.setIcon(self.package().path() + "contents/icons/sansimera.png")
-
         self.connect(self.icon, SIGNAL("clicked()"), self.next_item)
-
         self.label.setText(self.title())
-
         self.layout = QGraphicsLinearLayout(Qt.Horizontal, self.applet)
         self.layout.addItem(self.label)
-
         self.setLayout(self.layout)
         self.san_text()
-
         QObject.connect(self.timer, SIGNAL("timeout()"), self.san_text)
         self.timer.start(40000)
         QObject.connect(self.timer1, SIGNAL("timeout()"), self.connection_next_try)
@@ -86,14 +77,11 @@ class Sansimera(plasmascript.Applet):
         a3 = sansimera_data.Sansimera_data()
         a4 = sansimera_data_gen.Sansimera_data_gen()
         a5 = sansimera_data_than.Sansimera_data_than()
-
         self.lista1 = a3.lista()
         self.lista2 = a4.lista_gen()
         self.lista3 = a5.out_thanatoi()
         self.lista = self.lista1+self.lista2+self.lista3
-
         mikos = len(self.lista)
-
         self.san_lista = self.lista[self.deiktis]
         self.san_lista = self.trUtf8(self.san_lista)
         self.label.setText(self.title+self.san_lista)
