@@ -61,6 +61,7 @@ class Sansimera_data_gen(sansimera_data.Sansimera_data):
             if i.count('b>') == 1:
                 start_count = True
             if start_count == True:
+                i = ' '.join(i.split())
                 self.parser_gen(i)
             if i.count('/div>') == 1:
                 start_count = False
