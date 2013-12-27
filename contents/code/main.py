@@ -15,11 +15,18 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from PyQt4.QtCore import Qt, QObject, QTimer, SIGNAL
-from PyQt4.QtGui import QGraphicsLinearLayout
-from PyKDE4.plasma import Plasma
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from PyKDE4.plasma import *
 from PyKDE4 import plasmascript
-import sansimera_data, sansimera_data_gen, sansimera_data_than, sansimera_fetch
+from PyQt4 import uic
+from PyKDE4.kdecore import *
+from PyKDE4.kdeui import *
+import sansimera_data
+import sansimera_data_gen
+import sansimera_data_than
+import sansimera_fetch
+
 
 
 class Sansimera(plasmascript.Applet):
@@ -27,20 +34,26 @@ class Sansimera(plasmascript.Applet):
         plasmascript.Applet.__init__(self,parent)
 
     def init(self):
+        self.fonts = self.config().readEntry("blackfonts", False).toBool()
+        print(self.fonts)
+        self.setHasConfigurationInterface(True)
         self.download()
         self.deiktis = 0
         self.timer = QTimer(self)
         self.timer1 = QTimer(self)
         self.setMinimumSize(325.0,125.0)
         self.setAspectRatioMode(Plasma.IgnoreAspectRatio)
-        self.label = Plasma.Label(self.applet)
+        self.label = Plasma.TextBrowser(self.applet)
+        #self.label = Plasma.Label(self.applet)
         self.icon = Plasma.IconWidget(self.applet)
         self.icon.setIcon(self.package().path() + "contents/icons/sansimera.png")
+        self.icon_path = (self.package().path() + "contents/icons/sansimera.png")
         self.connect(self.icon, SIGNAL("clicked()"), self.next_item)
         self.label.setText(self.title())
         self.layout = QGraphicsLinearLayout(Qt.Horizontal, self.applet)
         self.layout.addItem(self.label)
         self.setLayout(self.layout)
+
         self.san_text()
         QObject.connect(self.timer, SIGNAL("timeout()"), self.san_text)
         self.timer.start(40000)
@@ -84,11 +97,39 @@ class Sansimera(plasmascript.Applet):
         mikos = len(self.lista)
         self.san_lista = self.lista[self.deiktis]
         self.san_lista = self.trUtf8(self.san_lista)
+        self.apply_settings()
         self.label.setText(self.title+self.san_lista)
-        #self.label.setStyleSheet("background:white; font-weight:normal; color:black;")
         self.deiktis+=1
         if self.deiktis == mikos:
             self.deiktis = 0
+
+    def createConfigurationInterface(self, parent):
+        self.general_widget = QWidget(parent)
+        parent.okClicked.connect(self.ConfigAccepted)
+        parent.applyClicked.connect(self.ConfigAccepted)
+        parent.cancelClicked.connect(self.configWidgetDestroyed)
+        self.general_ui = uic.loadUi(self.package().filePath('ui','general.ui'), self.general_widget)
+        self.general_ui.blackfonts_checkBox.setChecked(self.config().readEntry("blackfonts", False ).toBool())
+        self.general_ui.blackfonts_checkBox.stateChanged.connect(parent.settingsModified)
+        parent.addPage(self.general_widget, i18n('General'), self.icon_path)
+        
+    def ConfigAccepted(self):
+        self.config().writeEntry("blackfonts", bool(self.general_ui.blackfonts_checkBox.isChecked()))
+        self.fonts = self.general_ui.blackfonts_checkBox.isChecked()
+        self.apply_settings()
+        
+    def configWidgetDestroyed(self):
+        self.general_widget = None
+        self.general_ui = None
+        
+    def apply_settings(self):
+        if self.fonts:
+            self.label.setStyleSheet("color:black;")
+            self.label.setText(self.title+self.san_lista)
+        if not self.fonts:
+            self.label.setStyleSheet("color:white;")  
+            self.label.setText(self.title+self.san_lista)
+        
 
 def CreateApplet(parent):
     return Sansimera(parent)
