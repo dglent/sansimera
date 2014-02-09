@@ -23,7 +23,6 @@ class Sansimera_fetch(object):
     def __init__(self):
         self.online = False
 
-
     def url(self):
         imerominia = str(self.pay()+self.ponth())
         self.url = 'http://www.sansimera.gr/almanac/'+imerominia
@@ -35,7 +34,6 @@ class Sansimera_fetch(object):
         self.pay = imera[1]
         return self.pay
 
-
     def ponth(self):
         imera = str(datetime.date.today()).split('-')
         imera = imera[1:]
@@ -43,8 +41,10 @@ class Sansimera_fetch(object):
         return self.ponth
 
     def monthname(self):
-        dico = {'01': 'Ιανουαρίου', '02': 'Φεβρουαρίου', '03': 'Μαρτίου', '04': 'Απριλίου', '05': 'Μαίου', '06': 'Ιουνίου',\
-            '07': 'Ιουλίου', '08': 'Αυγούστου', '09': 'Σεπτεμβρίου', '10': 'Οκτωβρίου', '11': 'Νοεμβρίου', '12': 'Δεκεμβρίου'}
+        dico = {'01': 'Ιανουαρίου', '02': 'Φεβρουαρίου', '03': 'Μαρτίου', \
+            '04': 'Απριλίου', '05': 'Μαίου', '06': 'Ιουνίου', '07': 'Ιουλίου', \
+                '08': 'Αυγούστου', '09': 'Σεπτεμβρίου', '10': 'Οκτωβρίου', \
+                    '11': 'Νοεμβρίου', '12': 'Δεκεμβρίου'}
         n = self.ponth()
         self.im = str(' '*10+'...Σαν σήμερα '+self.pay()+' '+dico[n]+'\n')
         return self.im
@@ -65,7 +65,9 @@ class Sansimera_fetch(object):
             self.online=False
         arxeio.close()
 
-
+    def fetchDate(self):
+        date = str(datetime.date.today())
+        return date
 
 if __name__ == "__main__":
     a1=Sansimera_fetch()

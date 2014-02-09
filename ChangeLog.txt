@@ -1,3 +1,7 @@
+Version 1.7.1
+- Apply the fonts colour to links
+- If offline, try to fetch data if connexion goes online
+
 Version 1.7
 - Rewrite code for website changes
 - Add icons and links
@@ -14,10 +18,12 @@ Version 1.6
 - Remove whitespaces from text
 
 Version 1.5
-- Improve code to avoid occupy plasma desktop while switching the events. Now it retreives the events once on startup. If there is no connection it tries automaticaly after 20 minutes or when clicking the icon
+- Improve code to avoid occupy plasma desktop while switching the events. 
+  Now it retrieves the events once on startup. 
+  If there is no connection it tries automatically after 20 minutes or when clicking the icon
  
 Version 1.4
-- By accident i uploaded the version with black colored text that i used on my laptop.
+- By accident i uploaded the version with black coloured text that i used on my laptop.
 
 Version 1.3
 - Fix stop working after changes on the website of www.sansimera.gr

@@ -24,6 +24,8 @@ from PyKDE4.kdecore import *
 from PyKDE4.kdeui import *
 import sansimera_data
 import sansimera_fetch
+import re
+import datetime
 
 
 
@@ -32,13 +34,12 @@ class Sansimera(plasmascript.Applet):
         plasmascript.Applet.__init__(self,parent)
 
     def init(self):
-
         self.fonts = self.config().readEntry("blackfonts", False).toBool()
         self.setHasConfigurationInterface(True)
         self.download()
-        data = sansimera_data.Sansimera_data()
-        self.lista = data.getAll()
-        self.deiktis = 0
+        self.data = sansimera_data.Sansimera_data()
+        self.lista = self.data.getAll()
+        self.index = 0
         self.timer = QTimer(self)
         self.timer1 = QTimer(self)
         self.setMinimumSize(325.0,125.0)
@@ -51,18 +52,16 @@ class Sansimera(plasmascript.Applet):
         self.connect(self.icon, SIGNAL("clicked()"), self.next_item)
         firstTitleInit = sansimera_fetch.Sansimera_fetch()
         firstTitle = firstTitleInit.monthname()
-        
+        self.fetchDate = firstTitleInit.fetchDate()
         self.label.setText(firstTitle)
         self.layout = QGraphicsLinearLayout(Qt.Horizontal, self.applet)
         self.layout.addItem(self.label)
         self.setLayout(self.layout)
-
         self.san_text()
         QObject.connect(self.timer, SIGNAL("timeout()"), self.san_text)
         self.timer.start(40000)
         QObject.connect(self.timer1, SIGNAL("timeout()"), self.connection_next_try)
         self.timer1.start(1200000)
-        
 
     def download(self):
         fetch = sansimera_fetch.Sansimera_fetch()
@@ -70,27 +69,30 @@ class Sansimera(plasmascript.Applet):
         self.online = fetch.online
 
     def next_item(self):
-        self.san_text()
         self.timer.start(40000)
-        if self.online == False:
+        cDate = self.currentDate()
+        if self.online == False or cDate != self.fetchDate:
             self.download()
-
+            self.data = sansimera_data.Sansimera_data()
+            self.lista = self.data.getAll()
+        self.san_text()
 
     def connection_next_try(self):
         if self.online == False:
             self.download()
-
+            self.data = sansimera_data.Sansimera_data()
+            self.lista = self.data.getAll()
 
     def san_text(self):
-        mikos = len(self.lista)
-        self.san_lista = self.lista[self.deiktis]
+        length = len(self.lista)
+        self.san_lista = self.lista[self.index]
         self.san_lista = self.trUtf8(self.san_lista)
         self.apply_settings()
         self.label.setText(self.san_lista)
         #self.label.setStyleSheet("background:white; font-weight:normal; color:black;")
-        self.deiktis+=1
-        if self.deiktis == mikos:
-            self.deiktis = 0
+        self.index+=1
+        if self.index == length:
+            self.index = 0
 
     def createConfigurationInterface(self, parent):
         self.general_widget = QWidget(parent)
@@ -101,24 +103,49 @@ class Sansimera(plasmascript.Applet):
         self.general_ui.blackfonts_checkBox.setChecked(self.config().readEntry("blackfonts", False ).toBool())
         self.general_ui.blackfonts_checkBox.stateChanged.connect(parent.settingsModified)
         parent.addPage(self.general_widget, i18n('General'), self.icon_path)
-        
+
     def ConfigAccepted(self):
         self.config().writeEntry("blackfonts", bool(self.general_ui.blackfonts_checkBox.isChecked()))
         self.fonts = self.general_ui.blackfonts_checkBox.isChecked()
         self.apply_settings()
-        
+
     def configWidgetDestroyed(self):
         self.general_widget = None
         self.general_ui = None
-        
+
     def apply_settings(self):
         if self.fonts:
             self.label.setStyleSheet("color:black;")
+            links = re.findall('href="http://[a-zA-Z.0-9/]+">', self.san_lista)
+            # Remove links color if present
+            linksColor = re.findall('<font color=[a-z]+>', self.san_lista)
+            if len(linksColor) > 0:
+                for tag in linksColor:
+                    self.san_lista = self.san_lista.replace(tag, '')
+            # Apply black color for links
+            if len(links) > 0:
+                for link in links:
+                    self.san_lista = self.san_lista.replace(link, link+'<font color=black>')
             self.label.setText(self.san_lista)
+
+        # Apply white color
         if not self.fonts:
-            self.label.setStyleSheet("color:white;")  
+            self.label.setStyleSheet("color:white;")
+            links = re.findall('href="http://[a-zA-Z.0-9/]+">', self.san_lista)
+            # Remove links color if present
+            linksColor = re.findall('<font color=[a-z]+>', self.san_lista)
+            if len(linksColor) > 0:
+                for tag in linksColor:
+                    self.san_lista = self.san_lista.replace(tag, '')
+            # Apply white color for links
+            if len(links) > 0:
+                for link in links:
+                    self.san_lista = self.san_lista.replace(link, link+'<font color=white>')
             self.label.setText(self.san_lista)
-        
+
+    def currentDate(self):
+        cDate = str(datetime.date.today())
+        return cDate
 
 def CreateApplet(parent):
     return Sansimera(parent)

@@ -24,21 +24,26 @@ import os
 import Image
 import glob
 import sansimera_fetch
+import subprocess
 
 
 class Sansimera_data(object):
-    
     def __init__(self):
+        self.allList = []
+        self.baseurl = 'http://www.sansimera.gr/'
         fetch = sansimera_fetch.Sansimera_fetch()
         self.sanTitle = '&nbsp;'*10+fetch.monthname()+'<br/>'
-        
-        for _file in glob.glob('*.jpg'):
-            os.remove(_file)
-        self.baseurl = 'http://www.sansimera.gr/'
-        with open('sansimera_html') as html:
-            self.soup = BeautifulSoup(html)
-        self.allList = []
-        
+        cmd = ['kde4-config', '--localprefix']
+        output = subprocess.Popen( cmd, stdout=subprocess.PIPE ).communicate()[0]
+        defaultPath = output[:-1]+'share/apps/plasma/plasmoids/sansimera'
+        currentPath = os.getcwd()
+        if currentPath == defaultPath:
+            for _file in glob.glob('*.jpg'):
+                os.remove(_file)
+        if os.path.exists('sansimera_html'):
+            with open('sansimera_html') as html:
+                self.soup = BeautifulSoup(html)
+
     def getImage(self, text):
         relativeUrls = re.findall('href="(/[a-zA-Z./_0-9-]+)', text)
         year = re.findall('(<div>[0-9]+</div>)', text)
@@ -59,7 +64,7 @@ class Sansimera_data(object):
             return newText
         except:
             return text
-            
+
     def events(self):
         listd = self.soup.find_all('div')
         count=0
@@ -73,14 +78,13 @@ class Sansimera_data(object):
                         # Convert url to local path
                         didYouKnow_url_local = self.getImage(didYouKnow)
                         self.allList.append(str('<br/>' + didYouKnow_url_local))
-                    # Find the He Said ...    
+                    # Find the He Said ...
                     if tag[0] == 'quote' and tag[1] == 'white':
                         said = ('<br/>' + '&nbsp;'*10 + '<b>Είπε:</b>' + str(listd[count]))
                         whoSaid = str(listd[count+3])
                         # Convert url to local path
                         who_url_local = self.getImage(whoSaid)
                         self.allList.append(said + who_url_local)
-                        
                 if tag[0] == 'timeline-tab-content':
                     event = listd[count].get('id')
                     if event == 'Deaths':
@@ -94,7 +98,7 @@ class Sansimera_data(object):
                     eventText_url_local = self.getImage(eventText)
                     self.allList.append(str('<br/>' + event+eventText_url_local))
             count += 1
-        
+
     def imeres(self):
         worldlist = [str('&nbsp;'*20 + '<b>Παγκόσμιες Ημέρες</b><br/>')]
         lista = self.soup.find_all('a')
@@ -108,11 +112,10 @@ class Sansimera_data(object):
                         day = 'n'
                         title = self.sanTitle + '<br/>' + '&nbsp;'*20 + '<b>Εορτολόγιο</b><br/>'
                     tag = str(tag)
-                    url = str(url)
                     if 'Εορτολόγιο' in tag or 'Παγκόσμιες Ημέρες' in tag:
                         continue
-                    fullUrl = urljoin(self.baseurl, url)
-                    tag = tag.replace(url, fullUrl)
+                    # Parse with getImage() to expand relative urls
+                    tag = self.getImage(tag)
                     if day == 'w':
                         worldlist.append('<br/>' + tag + '.')
                     elif day == 'n':
@@ -122,15 +125,17 @@ class Sansimera_data(object):
             worldays = ' '.join(worldlist)
             worldays = '<b/>'+self.sanTitle + '<br/>' + worldays
             self.allList.append(worldays)
-                    
-    
+
     def getAll(self):
+        self.allList = []
         self.events()
         self.imeres()
+        if len(self.allList) == 0:
+            self.allList.append('<br/>' + self.sanTitle + '<br/><br/>Δεν βρέθηκαν γεγονότα, ελέγξτε τη σύνδεσή σας.')
         return self.allList
-    
+
 if __name__ == "__main__":
-    a1=Sansimera()
+    a1=Sansimera_data()
     lista = a1.getAll()
     for i in lista:
         print(i)
