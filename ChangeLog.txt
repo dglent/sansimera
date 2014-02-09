@@ -1,3 +1,6 @@
+Version 1.7.2
+- Add exception for python-pillow | python-image
+
 Version 1.7.1
 - Apply the fonts colour to links
 - If offline, try to fetch data if connexion goes online

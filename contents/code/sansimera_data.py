@@ -21,11 +21,14 @@ from urlparse import urljoin
 import re
 import urllib
 import os
-import Image
 import glob
 import sansimera_fetch
 import subprocess
 
+try:
+    import Image
+except ImportError:
+    from PIL import Image
 
 class Sansimera_data(object):
     def __init__(self):
