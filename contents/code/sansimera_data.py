@@ -15,106 +15,123 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+
+from bs4 import BeautifulSoup
+from urlparse import urljoin
 import re
+import urllib
+import os
+import Image
+import glob
+import sansimera_fetch
+
 
 class Sansimera_data(object):
+    
     def __init__(self):
-        self.elist = []
-
-    def parser(self, i):
-        ifind = i.index('>')
-        i = i[ifind+1:]
-        i = i.lstrip()
-        if i.count('&nbsp;') >= 1:
-            i = i.replace("&nbsp;", "")
-
-        # Find the event when the year exists
-        # Add a new line before the event
-        pattern = '[0-9]{1,4}:'
-        regexp = re.compile(pattern)
-        result = regexp.search(i)
-        if result:
-            i = '\n'+i
-
-        if i != '':
-            i = i.rstrip()
-            self.elist.append(i+' ')
-
-
-    def html(self):
+        fetch = sansimera_fetch.Sansimera_fetch()
+        self.sanTitle = '&nbsp;'*10+fetch.monthname()+'<br/>'
+        
+        for _file in glob.glob('*.jpg'):
+            os.remove(_file)
+        self.baseurl = 'http://www.sansimera.gr/'
+        with open('sansimera_html') as html:
+            self.soup = BeautifulSoup(html)
+        self.allList = []
+        
+    def getImage(self, text):
+        relativeUrls = re.findall('href="(/[a-zA-Z./_0-9-]+)', text)
+        year = re.findall('(<div>[0-9]+</div>)', text)
+        if len(relativeUrls) > 0:
+            for relurl in relativeUrls:
+                text = text.replace(relurl, self.baseurl[:-1]+relurl)
+        if len(year) > 0 :
+            text = text.replace(year[0], '<b>' + year[0] + ':</b>')
         try:
-            html_file = open('sansimera_html','r')
-            html = html_file.read()
-            self.htmll = html.split('h2')
-            self.htmll = self.htmll[2]
-            self.htmll = self.htmll.split('<')
+            iconUrl = re.findall('src="(http://[a-zA-Z./_0-9-]+)', text)[0]
+            iconName = os.path.basename(iconUrl)
+            urllib.urlretrieve(iconUrl, iconName)
+            im = Image.open(iconName)
+            newim = im.resize((36,32), Image.ANTIALIAS)
+            newim.save(iconName)
+            # Convert the url to local name
+            newText = text.replace(iconUrl, iconName)
+            return newText
         except:
-            self.htmll = 'Δεν βρέθηκαν γεγονότα, ελέγξτε τη σύνδεσή σας.'
-            self.elist.append(self.htmll)
-        return self.htmll
-
-
-
-    def out(self):
-        start_count = False
-        try:
-            self.htmll = self.html()
-            for i in self.htmll:
-                if i.count('b>') == 1:
-                    start_count=True
-                if start_count == True:
-                    self.parser(i)
-                if i.count('/div>') == 1:
-                    start_count=False
-
-        except:
-            self.elist = ['Δεν βρέθηκαν γεγονότα','Ελέγξτε τη σύνδεσή σας']
-
-
-
-    def lista(self):
-        "Make each event an element of the list"
-        self.out()
-        self.lista = self.elist[:]
-        self.count_lista = []
-        self.sec_lista = []
-        count = 0
-        #Find the position in the list which containt the year of the events
-        pattern = '[0-9]{1,4}: '
-        regexp = re.compile(pattern)
-        for i in self.lista:
-            result = regexp.search(i)
-            if result:
-                self.count_lista.append(count)
-            count+=1
-
-        #Make one element by event in the list
-        self.n_elist = []
-        item0 = 0
-        item1 = 1
-        mikos = len(self.count_lista)
-        lmikos = len(self.lista)
-        flag_end = False
-
-        for i in self.count_lista:
-            it0 = self.count_lista[item0]
-            if mikos == item1:
-                it1 = lmikos
-                flag_end = True
-            if flag_end == False:
-                it1 = self.count_lista[item1]
-            pedio=''.join(self.lista[it0:it1])
-            self.n_elist.append(pedio)
-            item0+=1
-            item1+=1
-        if len(self.n_elist) == 0:
-            self.n_elist = self.elist[:]
-
-        return self.n_elist
-
-
-
+            return text
+            
+    def events(self):
+        listd = self.soup.find_all('div')
+        count=0
+        for div in listd:
+            tag = div.get('class')
+            if isinstance(tag, list):
+                if len(tag) > 1:
+                    # Find the Did You Know ...
+                    if tag[0] == 'over' and tag[1] == 'mb10':
+                        didYouKnow = (str(listd[count]))
+                        # Convert url to local path
+                        didYouKnow_url_local = self.getImage(didYouKnow)
+                        self.allList.append(str('<br/>' + didYouKnow_url_local))
+                    # Find the He Said ...    
+                    if tag[0] == 'quote' and tag[1] == 'white':
+                        said = ('<br/>' + '&nbsp;'*10 + '<b>Είπε:</b>' + str(listd[count]))
+                        whoSaid = str(listd[count+3])
+                        # Convert url to local path
+                        who_url_local = self.getImage(whoSaid)
+                        self.allList.append(said + who_url_local)
+                        
+                if tag[0] == 'timeline-tab-content':
+                    event = listd[count].get('id')
+                    if event == 'Deaths':
+                        event = self.sanTitle + '<small><i>Θάνατος</i></small>'
+                    elif event == 'Births':
+                        event = self.sanTitle + '<small><i>Γέννηση</small></i>'
+                    else:
+                        event = self.sanTitle
+                if tag[0] == 'timeline-item' and tag[1] == 'clearfix':
+                    eventText = str(listd[count])
+                    eventText_url_local = self.getImage(eventText)
+                    self.allList.append(str('<br/>' + event+eventText_url_local))
+            count += 1
+        
+    def imeres(self):
+        worldlist = [str('&nbsp;'*20 + '<b>Παγκόσμιες Ημέρες</b><br/>')]
+        lista = self.soup.find_all('a')
+        for tag in lista:
+            url = tag.get('href')
+            if isinstance(url, str):
+                if 'worldays' in url or 'namedays' in url:
+                    if 'worldays' in url:
+                        day = 'w'
+                    elif 'namedays' in url:
+                        day = 'n'
+                        title = self.sanTitle + '<br/>' + '&nbsp;'*20 + '<b>Εορτολόγιο</b><br/>'
+                    tag = str(tag)
+                    url = str(url)
+                    if 'Εορτολόγιο' in tag or 'Παγκόσμιες Ημέρες' in tag:
+                        continue
+                    fullUrl = urljoin(self.baseurl, url)
+                    tag = tag.replace(url, fullUrl)
+                    if day == 'w':
+                        worldlist.append('<br/>' + tag + '.')
+                    elif day == 'n':
+                        tag = '<br>'+title+'</br>'+tag
+                        self.allList.append(tag)
+        if len(worldlist) > 1:
+            worldays = ' '.join(worldlist)
+            worldays = '<b/>'+self.sanTitle + '<br/>' + worldays
+            self.allList.append(worldays)
+                    
+    
+    def getAll(self):
+        self.events()
+        self.imeres()
+        return self.allList
+    
 if __name__ == "__main__":
-    a1=Sansimera_data()
-    for i in a1.lista():
+    a1=Sansimera()
+    lista = a1.getAll()
+    for i in lista:
         print(i)
+        raw_input()

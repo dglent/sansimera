@@ -15,12 +15,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import sansimera_data
 import os
 import datetime
 import subprocess
 
-class Sansimera_fetch(sansimera_data.Sansimera_data):
+class Sansimera_fetch(object):
     def __init__(self):
         self.online = False
 
