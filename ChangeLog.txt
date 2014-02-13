@@ -1,3 +1,10 @@
+Version 1.7.4
+- Remove previous displaying missing modules (regression in images displaying)
+
+Version 1.7.3
+- Add b.C. if needed in years
+- Don't crash if a requirement is missing, instead display a message with the needed python package
+
 Version 1.7.2
 - Add exception for python-pillow | python-image
 

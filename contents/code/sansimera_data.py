@@ -16,7 +16,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 
-from bs4 import BeautifulSoup
 from urlparse import urljoin
 import re
 import urllib
@@ -24,15 +23,18 @@ import os
 import glob
 import sansimera_fetch
 import subprocess
+from bs4 import BeautifulSoup
 
 try:
     import Image
 except ImportError:
     from PIL import Image
 
+
 class Sansimera_data(object):
     def __init__(self):
         self.allList = []
+        self.addBC = False
         self.baseurl = 'http://www.sansimera.gr/'
         fetch = sansimera_fetch.Sansimera_fetch()
         self.sanTitle = '&nbsp;'*10+fetch.monthname()+'<br/>'
@@ -49,12 +51,15 @@ class Sansimera_data(object):
 
     def getImage(self, text):
         relativeUrls = re.findall('href="(/[a-zA-Z./_0-9-]+)', text)
-        year = re.findall('(<div>[0-9]+</div>)', text)
+        yeartoBold = re.findall('(<div>[0-9]+</div>)', text)
         if len(relativeUrls) > 0:
             for relurl in relativeUrls:
                 text = text.replace(relurl, self.baseurl[:-1]+relurl)
-        if len(year) > 0 :
-            text = text.replace(year[0], '<b>' + year[0] + ':</b>')
+        if len(yeartoBold) > 0:
+            year = yeartoBold[0]
+            if self.bC:
+                year = yeartoBold[0].replace('</div>', ' π.Χ.</div>', re.UNICODE)
+            text = text.replace(yeartoBold[0], '<b>' + year + ':</b>')
         try:
             iconUrl = re.findall('src="(http://[a-zA-Z./_0-9-]+)', text)[0]
             iconName = os.path.basename(iconUrl)
@@ -98,11 +103,18 @@ class Sansimera_data(object):
                         event = self.sanTitle
                 if tag[0] == 'timeline-item' and tag[1] == 'clearfix':
                     eventText = str(listd[count])
+                    # Find if before Christ
+                    divBC = str(listd[count-1].p)
+                    bC = re.findall('<span>[\.π\s\.Χ]+</span>', divBC, re.UNICODE)
+                    if len(bC) == 1:
+                            self.bC = True
+                    else:
+                        self.bC = False
                     eventText_url_local = self.getImage(eventText)
                     self.allList.append(str('<br/>' + event+eventText_url_local))
             count += 1
 
-    def imeres(self):
+    def days(self):
         worldlist = [str('&nbsp;'*20 + '<b>Παγκόσμιες Ημέρες</b><br/>')]
         lista = self.soup.find_all('a')
         for tag in lista:
@@ -132,7 +144,7 @@ class Sansimera_data(object):
     def getAll(self):
         self.allList = []
         self.events()
-        self.imeres()
+        self.days()
         if len(self.allList) == 0:
             self.allList.append('<br/>' + self.sanTitle + '<br/><br/>Δεν βρέθηκαν γεγονότα, ελέγξτε τη σύνδεσή σας.')
         return self.allList
