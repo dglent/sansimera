@@ -36,8 +36,9 @@ class Sansimera_data(object):
         self.allList = []
         self.addBC = False
         self.baseurl = 'http://www.sansimera.gr/'
-        fetch = sansimera_fetch.Sansimera_fetch()
-        self.sanTitle = '&nbsp;'*10+fetch.monthname()+'<br/>'
+        self.fetch = sansimera_fetch.Sansimera_fetch()
+        self.month = self.fetch.monthname()
+        self.sanTitle = '&nbsp;'*10+self.month
         cmd = ['kde4-config', '--localprefix']
         output = subprocess.Popen( cmd, stdout=subprocess.PIPE ).communicate()[0]
         defaultPath = output[:-1]+'share/apps/plasma/plasmoids/sansimera'
@@ -56,10 +57,11 @@ class Sansimera_data(object):
             for relurl in relativeUrls:
                 text = text.replace(relurl, self.baseurl[:-1]+relurl)
         if len(yeartoBold) > 0:
-            year = yeartoBold[0]
+            self.year = yeartoBold[0]
             if self.bC:
-                year = yeartoBold[0].replace('</div>', ' π.Χ.</div>', re.UNICODE)
-            text = text.replace(yeartoBold[0], '<b>' + year + ':</b>')
+                self.year = yeartoBold[0].replace('</div>', ' π.Χ.</div>', re.UNICODE)
+            self.year = '<b>'+self.year[5:-6]+':</b>'
+            text = text.replace(yeartoBold[0], '')
         try:
             iconUrl = re.findall('src="(http://[a-zA-Z./_0-9-]+)', text)[0]
             iconName = os.path.basename(iconUrl)
@@ -74,6 +76,7 @@ class Sansimera_data(object):
             return text
 
     def events(self):
+        birthDeath = ''
         listd = self.soup.find_all('div')
         count=0
         for div in listd:
@@ -96,9 +99,11 @@ class Sansimera_data(object):
                 if tag[0] == 'timeline-tab-content':
                     event = listd[count].get('id')
                     if event == 'Deaths':
-                        event = self.sanTitle + '<small><i>Θάνατος</i></small>'
+                        event = self.sanTitle
+                        birthDeath = '<br/><small><i>Θάνατος</i></small>'
                     elif event == 'Births':
-                        event = self.sanTitle + '<small><i>Γέννηση</small></i>'
+                        event = self.sanTitle
+                        birthDeath = '<br/><small><i>Γέννηση</small></i>'
                     else:
                         event = self.sanTitle
                 if tag[0] == 'timeline-item' and tag[1] == 'clearfix':
@@ -111,7 +116,7 @@ class Sansimera_data(object):
                     else:
                         self.bC = False
                     eventText_url_local = self.getImage(eventText)
-                    self.allList.append(str('<br/>' + event+eventText_url_local))
+                    self.allList.append(str('<br/>' + event+self.year+birthDeath+eventText_url_local))
             count += 1
 
     def days(self):
@@ -134,7 +139,7 @@ class Sansimera_data(object):
                     if day == 'w':
                         worldlist.append('<br/>' + tag + '.')
                     elif day == 'n':
-                        tag = '<br>'+title+'</br>'+tag
+                        tag = '<br>'+title+'<br/>' + tag
                         self.allList.append(tag)
         if len(worldlist) > 1:
             worldays = ' '.join(worldlist)
