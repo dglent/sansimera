@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2013  Dimitrios Glentadakis <dglent@gmail.com>
+# Copyright (C) 2013  Dimitrios Glentadakis <dglent@free.fr>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

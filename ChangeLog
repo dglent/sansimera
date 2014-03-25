@@ -1,3 +1,7 @@
+Version 1.7.6
+- Fix purge old fetched html data
+- Adjust space in 'Did you know'
+
 Version 1.7.5
 - The event year is displayed in the title to improve arrangement
 

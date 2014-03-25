@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2013  Dimitrios Glentadakis <dglent@gmail.com>
+# Copyright (C) 2013  Dimitrios Glentadakis <dglent@free.fr>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,16 +36,20 @@ class Sansimera_data(object):
         self.allList = []
         self.addBC = False
         self.baseurl = 'http://www.sansimera.gr/'
-        self.fetch = sansimera_fetch.Sansimera_fetch()
-        self.month = self.fetch.monthname()
-        self.sanTitle = '&nbsp;'*10+self.month
+        # Clean files from a previous fetch
         cmd = ['kde4-config', '--localprefix']
         output = subprocess.Popen( cmd, stdout=subprocess.PIPE ).communicate()[0]
         defaultPath = output[:-1]+'share/apps/plasma/plasmoids/sansimera'
         currentPath = os.getcwd()
         if currentPath == defaultPath:
-            for _file in glob.glob('*.jpg'):
-                os.remove(_file)
+            plasmoidFiles = ('ChangeLog.txt', 'contents', 'README',
+                             'metadata.desktop', 'sansimera_html')
+            for _file in glob.glob('*'):
+                if _file not in plasmoidFiles:
+                    os.remove(_file)
+        self.fetch = sansimera_fetch.Sansimera_fetch()
+        self.month = self.fetch.monthname()
+        self.sanTitle = '&nbsp;'*10+self.month
         if os.path.exists('sansimera_html'):
             with open('sansimera_html') as html:
                 self.soup = BeautifulSoup(html)
@@ -88,7 +92,10 @@ class Sansimera_data(object):
                         didYouKnow = (str(listd[count]))
                         # Convert url to local path
                         didYouKnow_url_local = self.getImage(didYouKnow)
-                        self.allList.append(str('<br/>' + didYouKnow_url_local))
+                        didYouKnow_url_local = didYouKnow_url_local.replace(
+                            'ΗΞΕΡΕΣ ΟΤΙ...', '&nbsp;'*10+'ΗΞΕΡΕΣ ΟΤΙ...')
+                        didYouKnow_url_local = didYouKnow_url_local.replace('<br/>', '',1)
+                        self.allList.append(didYouKnow_url_local)
                     # Find the He Said ...
                     if tag[0] == 'quote' and tag[1] == 'white':
                         said = ('<br/>' + '&nbsp;'*10 + '<b>Είπε:</b>' + str(listd[count]))
